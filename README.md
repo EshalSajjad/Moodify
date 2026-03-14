@@ -1,4 +1,5 @@
-# Moodify 🎵 — Spotify Song Recommender
+# Moodify
+## Spotify Song Recommender
 
 A mood-based song recommender built with ML. Search any song, get 8 recommendations based on audio feature similarity and mood clustering.
 
