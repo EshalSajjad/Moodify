@@ -73,7 +73,7 @@
 
     #result { display: none; }
 
-    /* input song card */
+    /* song card */
     .now-playing {
       background: linear-gradient(135deg, #1db954 0%, #158a3e 100%);
       border-radius: 16px;
@@ -176,7 +176,7 @@
 
 <header>
   <h1>Moodi<span>fy</span></h1>
-  <p>Search any song — we'll find your next favourite based on audio features & mood.</p>
+  <p>Find your next favourite song!</p>
   <div class="search-wrap">
     <input id="search-input" type="text" placeholder="Search a song name…" autocomplete="off"/>
     <div id="suggestions"></div>
@@ -190,8 +190,7 @@
   </div>
 
   <div id="empty-state">
-    <div class="big">🎧</div>
-    <p>Search for a song above to get personalised recommendations.</p>
+    <p>Search for a song.</p>
   </div>
 
   <div id="result">
@@ -228,7 +227,7 @@ async function fetchSuggestions(q) {
   suggestionsBox.innerHTML = data.map(s => `
     <div class="suggestion-item" onclick="loadRecommendations(${s.idx}, '${escHtml(s.track_name)}')">
       <span class="name">${escHtml(s.track_name)}</span>
-      <span class="meta">${escHtml(s.track_genre)} · ⭐ ${s.popularity}</span>
+      <span class="meta">${escHtml(s.track_genre)} · ${s.popularity} favourites</span>
     </div>`).join('');
   suggestionsBox.style.display = 'block';
 }
@@ -255,7 +254,7 @@ function renderInput(song) {
     <div>
       <div class="label">Now playing</div>
       <div class="song-title">${escHtml(song.track_name)}</div>
-      <div class="genre">${escHtml(song.track_genre)} · ⭐ ${song.popularity}</div>
+      <div class="genre">${escHtml(song.track_genre)} · ${song.popularity} favourites</div>
       <div class="audio-bars">
         ${audioBar('Energy', song.energy)}
         ${audioBar('Valence', song.valence)}
@@ -281,7 +280,7 @@ function renderRecs(recs) {
       <div class="rec-title" title="${escHtml(r.track_name)}">${escHtml(r.track_name)}</div>
       <div class="rec-genre">${escHtml(r.track_genre)}</div>
       <div class="rec-meta">
-        <span>⭐ ${r.popularity} people liked this.</span>
+        <span> Liked by ${r.popularity}</span>
         <span> ${escHtml(r.cluster_name)}</span>
       </div>
     </div>`).join('');

@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 
 app = Flask(__name__)
 
-# ── load & prep data once at startup ─────────────────────────────────────────
+# load & prep data
 df = pd.read_csv("cleaned_dataset_spotify.csv")
 
 FEATURE_COLS = ["energy", "danceability", "valence", "loudness", "acousticness"]
@@ -19,16 +19,8 @@ CLUSTER_NAMES = {
     3: "Sad Acoustic (Instrumental)",
     4: "Sad Acoustic (Vocal)",
 }
-# CLUSTER_EMOJIS = {
-#     0: "⚡",
-#     1: "💃",
-#     2: "🎉",
-#     3: "🎸",
-#     4: "🥺",
-# }
 
-# ── train Random Forest mood classifier ──────────────────────────────────────
-# same features as your notebook Cell 26
+# train Random Forest mood classifier
 RF_FEATURES = ["danceability", "energy", "loudness", "speechiness",
                "acousticness", "instrumentalness", "liveness", "valence", "tempo"]
 
@@ -59,7 +51,7 @@ def predict_mood(row):
     return int(mood_classifier.predict(features)[0])
 
 
-# ── similarity setup (sample for performance) ────────────────────────────────
+# similarity setup (sample for performance)
 df_sample = df.sample(n=8000, random_state=42).reset_index(drop=True)
 
 X = df_sample[FEATURE_COLS].fillna(df_sample[FEATURE_COLS].mean())
@@ -96,7 +88,7 @@ def song_to_dict(row, similarity=None):
     return d
 
 
-# ── routes ───────────────────────────────────────────────────────────────────
+# routes
 @app.route("/")
 def index():
     return render_template("index.html")
