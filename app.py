@@ -24,7 +24,8 @@ CLUSTER_NAMES = {
 RF_FEATURES = ["danceability", "energy", "loudness", "speechiness",
                "acousticness", "instrumentalness", "liveness", "valence", "tempo"]
 
-_rf_data = df[RF_FEATURES + ["cluster"]].dropna()
+# _rf_data = df[RF_FEATURES + ["cluster"]].dropna()
+_rf_data = df[RF_FEATURES + ["cluster"]].dropna().sample(n=20000, random_state=42)
 X_rf = _rf_data[RF_FEATURES]
 y_rf = _rf_data["cluster"]
 X_train, X_test, y_train, y_test = train_test_split(
@@ -52,7 +53,7 @@ def predict_mood(row):
 
 
 # similarity setup (sample for performance)
-df_sample = df.sample(n=8000, random_state=42).reset_index(drop=True)
+df_sample = df.sample(n=3000, random_state=42).reset_index(drop=True)
 
 X = df_sample[FEATURE_COLS].fillna(df_sample[FEATURE_COLS].mean())
 scaler = StandardScaler()
