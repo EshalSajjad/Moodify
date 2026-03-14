@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Moodify — Song Recommender</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 2rem 2rem 1rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+    header h1 span { color: #1db954; }
+    header p { color: #aaa; margin-top: .4rem; font-size: .95rem; }
+
+    .search-wrap {
+      max-width: 560px;
+      margin: 1.5rem auto 0;
+      padding: 0 1rem;
+      position: relative;
+    }
+    #search-input {
+      width: 100%;
+      padding: .85rem 1.2rem;
+      border-radius: 999px;
+      border: 2px solid #333;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #search-input:focus { border-color: #1db954; }
+    #search-input::placeholder { color: #666; }
+
+    #suggestions {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 1rem; right: 1rem;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 100;
+      display: none;
+    }
+    .suggestion-item {
+      padding: .75rem 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background .15s;
+    }
+    .suggestion-item:hover { background: #2a2a2a; }
+    .suggestion-item .name { font-weight: 600; font-size: .95rem; }
+    .suggestion-item .meta { font-size: .8rem; color: #888; }
+
+    main { max-width: 860px; margin: 2.5rem auto; padding: 0 1rem 4rem; }
+
+    #result { display: none; }
+
+    /* input song card */
+    .now-playing {
+      background: linear-gradient(135deg, #1db954 0%, #158a3e 100%);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .now-playing .label { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; opacity: .8; }
+    .now-playing .song-title { font-size: 1.6rem; font-weight: 800; margin: .2rem 0 .4rem; }
+    .now-playing .genre { font-size: .9rem; opacity: .85; }
+    .mood-badge {
+      background: rgba(0,0,0,.25);
+      border-radius: 999px;
+      padding: .4rem 1rem;
+      font-size: .9rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .audio-bars {
+      display: flex;
+      gap: .75rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .audio-bar { flex: 1; min-width: 80px; }
+    .audio-bar .bar-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; opacity: .7; margin-bottom: .3rem; }
+    .audio-bar .bar-track { background: rgba(0,0,0,.2); border-radius: 999px; height: 6px; }
+    .audio-bar .bar-fill { background: #fff; border-radius: 999px; height: 6px; transition: width .5s ease; }
+    .audio-bar .bar-val { font-size: .8rem; margin-top: .25rem; }
+
+    h2.section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .rec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .rec-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 1.1rem 1.2rem;
+      transition: border-color .2s, transform .15s;
+      cursor: default;
+    }
+    .rec-card:hover { border-color: #1db954; transform: translateY(-2px); }
+    .rec-card .rec-title { font-weight: 700; font-size: .95rem; margin-bottom: .25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rec-card .rec-genre { font-size: .8rem; color: #777; margin-bottom: .6rem; }
+    .rec-card .rec-meta { display: flex; justify-content: space-between; font-size: .78rem; color: #555; }
+    .rec-card .sim-pill {
+      display: inline-block;
+      background: #1db95422;
+      color: #1db954;
+      border-radius: 999px;
+      padding: .15rem .6rem;
+      font-size: .75rem;
+      font-weight: 600;
+      margin-bottom: .5rem;
+    }
+
+    #loading {
+      text-align: center;
+      color: #555;
+      padding: 3rem;
+      display: none;
+    }
+    .spinner {
+      display: inline-block;
+      width: 28px; height: 28px;
+      border: 3px solid #333;
+      border-top-color: #1db954;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-bottom: .75rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #empty-state {
+      text-align: center;
+      color: #444;
+      padding: 5rem 1rem;
+    }
+    #empty-state .big { font-size: 3rem; }
+    #empty-state p { margin-top: .5rem; font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Moodi<span>fy</span></h1>
+  <p>Search any song — we'll find your next favourite based on audio features & mood.</p>
+  <div class="search-wrap">
+    <input id="search-input" type="text" placeholder="Search a song name…" autocomplete="off"/>
+    <div id="suggestions"></div>
+  </div>
+</header>
+
+<main>
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Finding songs that match your vibe…</p>
+  </div>
+
+  <div id="empty-state">
+    <div class="big">🎧</div>
+    <p>Search for a song above to get personalised recommendations.</p>
+  </div>
+
+  <div id="result">
+    <div class="now-playing" id="now-playing-card"></div>
+    <h2 class="section-title">You might also like</h2>
+    <div class="rec-grid" id="rec-grid"></div>
+  </div>
+</main>
+
+<script>
+const searchInput = document.getElementById('search-input');
+const suggestionsBox = document.getElementById('suggestions');
+const resultDiv = document.getElementById('result');
+const loadingDiv = document.getElementById('loading');
+const emptyState = document.getElementById('empty-state');
+let debounceTimer;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { suggestionsBox.style.display = 'none'; return; }
+  debounceTimer = setTimeout(() => fetchSuggestions(q), 250);
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) suggestionsBox.style.display = 'none';
+});
+
+async function fetchSuggestions(q) {
+  const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  if (!data.length) { suggestionsBox.style.display = 'none'; return; }
+
+  suggestionsBox.innerHTML = data.map(s => `
+    <div class="suggestion-item" onclick="loadRecommendations(${s.idx}, '${escHtml(s.track_name)}')">
+      <span class="name">${escHtml(s.track_name)}</span>
+      <span class="meta">${escHtml(s.track_genre)} · ⭐ ${s.popularity}</span>
+    </div>`).join('');
+  suggestionsBox.style.display = 'block';
+}
+
+async function loadRecommendations(idx, name) {
+  suggestionsBox.style.display = 'none';
+  searchInput.value = name;
+  emptyState.style.display = 'none';
+  resultDiv.style.display = 'none';
+  loadingDiv.style.display = 'block';
+
+  const res = await fetch(`/recommend/${idx}`);
+  const data = await res.json();
+  loadingDiv.style.display = 'none';
+
+  renderInput(data.input);
+  renderRecs(data.recommendations);
+  resultDiv.style.display = 'block';
+}
+
+function renderInput(song) {
+  const card = document.getElementById('now-playing-card');
+  card.innerHTML = `
+    <div>
+      <div class="label">Now playing</div>
+      <div class="song-title">${escHtml(song.track_name)}</div>
+      <div class="genre">${escHtml(song.track_genre)} · ⭐ ${song.popularity}</div>
+      <div class="audio-bars">
+        ${audioBar('Energy', song.energy)}
+        ${audioBar('Valence', song.valence)}
+        ${audioBar('Dance', song.danceability)}
+      </div>
+    </div>
+    <div class="mood-badge">${song.cluster_emoji} ${escHtml(song.cluster_name)}</div>`;
+}
+
+function audioBar(label, val) {
+  return `<div class="audio-bar">
+    <div class="bar-label">${label}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${val*100}%"></div></div>
+    <div class="bar-val">${(val*100).toFixed(0)}%</div>
+  </div>`;
+}
+
+function renderRecs(recs) {
+  const grid = document.getElementById('rec-grid');
+  grid.innerHTML = recs.map(r => `
+    <div class="rec-card">
+      <div class="sim-pill">~${r.similarity}% match</div>
+      <div class="rec-title" title="${escHtml(r.track_name)}">${escHtml(r.track_name)}</div>
+      <div class="rec-genre">${escHtml(r.track_genre)}</div>
+      <div class="rec-meta">
+        <span>⭐ ${r.popularity} people liked this.</span>
+        <span> ${escHtml(r.cluster_name)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
