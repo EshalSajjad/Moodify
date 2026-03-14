@@ -1,9 +1,7 @@
 services:
   - type: web
     name: moodify
-    env: python
+    runtime: python
+    pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
